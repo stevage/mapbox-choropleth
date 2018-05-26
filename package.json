@@ -1,6 +1,6 @@
 {
   "name": "mapbox-choropleth",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Generate choropleths in Mapbox-GL-JS maps from a CSV file and a boundary geometry source.",
   "main": "choropleth.js",
   "scripts": {
