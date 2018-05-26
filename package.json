@@ -1,5 +1,5 @@
 {
-  "name": "mapbox-gl-choropleth",
+  "name": "mapbox-choropleth",
   "version": "0.2.0",
   "description": "Generate choropleths in Mapbox-GL-JS maps from a CSV file and a boundary geometry source.",
   "main": "choropleth.js",
@@ -8,7 +8,7 @@
   },
   "author": "Steve Bennett <me@stevebennett.me> (http://stevebennett.me)",
   "license": "Apache-2.0",
-  "repository": "https://github.com/stevage/mapbox-gl-choropleth",
+  "repository": "https://github.com/stevage/mapbox-choropleth",
   "dependencies": {
     "chroma-js": "^1.3.7",
     "d3-fetch": "^1.1.0",
