@@ -1,4 +1,4 @@
-## Mapbox-choropleth
+## Mapbox-GL-Choropleth
 
 Creates choropleth layers for Mapbox-GL-JS maps. A choropleth (sometimes called a heatmap) is a type of data visualisation where polygons (typically administrative boundaries such as states) are coloured to represent a numeric quantity (such as population). 
 
@@ -11,6 +11,8 @@ It uses:
 * Chroma.JS to assign a colour palette
 
 ### Usage
+
+Install: `npm install mapbox-gl-choropleth`
 
 ```
 const Choropleth = require('./choropleth');
