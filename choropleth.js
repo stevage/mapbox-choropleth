@@ -1,82 +1,49 @@
-/*
-let choro = new Choropleth({
-    table: 'mydata.csv', // CSV url. Or array of [{col1: val, col2: val}, ...]
-
-    geometry: 'boundaries.geojson', // GeoJSON URL, mapbox:// URL, or { source: 'mysource', sourceLayer: 'lga-boundaries'}
-    tableId: 'boundary_id', // column name in table
-    geometryId: 'id',
-    numericCol: 'val',
-    binMethod: 'ckmeans',
-    binCount: 7,
-    colorScale: 'OrRd' // Any string/array accepted by chroma.scale, including Color Brewer identifiers.
-}).addTo(map);
-
-
-*/
 /* jshint esnext:true */
-
 const ss = require('simple-statistics');
 const chroma = require('chroma-js');
-function bins(vals, binCount) {
-    return ss.ckmeans(vals, Math.min(binCount, vals.length))
-        .map(vals => ({
-            min: ss.min(vals),
-            max: ss.max(vals)
-        }));
-}
+const d3 = require('d3-fetch');
 
 if (typeof fetch !== 'function') {
+    // required for testing in node. Annoyingly this fails in browser...
     // global.fetch = require('node-fetch-polyfill');
 }
-const d3 = require('d3-fetch');
+
 class Choropleth {
     makeColorScale() {
-        const vals = this.table.map(row => row[this.options.numericCol]);
-        // const vals = [7,5,3,9,8,8,7,6,10];
+        const vals = this.table.map(row => row[this.tableNumericField]);
         const breaks = this.breaks(vals);
-        // console.log(breaks);
         this.colorScale = chroma
-            .scale(this.options.colorScheme)
+            .scale(this.colorScheme)
             .domain([this.minVal, this.maxVal])
             .classes(breaks);
-            
-        // con sole.log(vals.map(v => this.colorScale(v).hsl()));
     }
-    makeSource(geometry) {
-        if (geometry.match (/\.geojson$/)) {
-            this.source = {
-                type: 'geojson', 
-                url: geometry
-            };
-        } else {
-            this.source = {
-                type: 'vector',
-                url: geometry
-            };
-        }
+    makeSource() {
+        this.source = {
+            type: this.geometryType,
+            url: this.geometryUrl
+        };
         this.sourceId = 'choropleth';
     }
     makeLayer() {
-        const rowToStop = row => [row[this.options.tableId], this.colorScale(row[this.options.numericCol]).hex()];
+        const rowToStop = row => [row[this.tableIdField], this.colorScale(row[this.tableNumericField]).hex()];
         this.layerId = 'choropleth';
         this.layer = {
             id: this.layerId,
             type: 'fill',
             source: this.sourceId,
-            'source-layer': this.options.sourceLayer,
+            'source-layer': this.sourceLayer,
             paint: {
                 'fill-color': {
-                    property: this.options.geometryId,
+                    property: this.geometryIdField,
                     // TODO check if number of geometry rows or table rows is shorter, and use that.
                     stops: this.table.map(rowToStop),
                     type: 'categorical'
                 }
             }
-
         };
     }
     breaks (vals) {
-        let bins = ss.ckmeans(vals, Math.min(this.options.binCount, vals.length));
+        let bins = ss.ckmeans(vals, Math.min(this.binCount, vals.length));
         this.minVal = bins[0][0];
         this.maxVal = bins[bins.length - 1].slice(-1)[0];
         return [
@@ -86,13 +53,18 @@ class Choropleth {
     }
 
     checkOptions(options) {
-        this.options = Object.assign({
+        for (let field of ['geometryUrl','tableUrl','tableIdField','tableNumericField','geometryIdField']) {
+            if (!options[field]) throw (field + ' required.');
+        }        
+        
+        Object.assign(this, {
             binCount: 7,
-            colorScheme: 'OrRd',
+            colorScheme: 'RdBu',
         }, options);
-        // TODO validate
-        // table must exist...
-        // check sourceLayer if geometry is a mapbox://
+
+        this.geometryType = this.geometryUrl.match(/\.geojson/) ? 'geojson' : 'vector';
+
+        if (this.geometryType === 'vector' && !this.sourceLayer) throw ('sourceLayer required.');
     }
     addTo(map) {
         const addTable = table => {
@@ -108,23 +80,18 @@ class Choropleth {
         };
         const mapReady = cb => map.loaded() ? cb () : map.on('load', cb);
         mapReady( () => Promise.resolve(this.table).then(addTable));
+        return this;
     }
     constructor (options) {
+        const convertRow = row => (row[this.tablenumericField] = +row[this.tablenumericField], row);
         this.checkOptions(options);
-        const convertRow = row => {
-            row[this.options.numericCol] = +row[this.options.numericCol];
-            return row;
-        };
-        let tableP, geometryP;
-        this.makeSource(this.options.geometry);
-        this.table = d3.csv(this.options.table, convertRow)
-        .then(table => {
-            this.table = table;
-            this.makeColorScale();
-            this.makeLayer();
-        })
-        .catch(e => { throw(e) });//console.error)
-    }
-    
+        this.makeSource();
+        this.table = d3.csv(this.tableUrl, convertRow)
+            .then(table => {
+                this.table = table;
+                this.makeColorScale();
+                this.makeLayer();
+            }).catch(e => { throw(e); });
+    }    
 }
 module.exports = Choropleth;
