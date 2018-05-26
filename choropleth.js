@@ -9,6 +9,13 @@ if (typeof fetch !== 'function') {
 }
 
 class Choropleth {
+    breaks (vals) {
+        this.bins = ss.ckmeans(vals, Math.min(this.binCount, vals.length))
+            .map(bin => [bin[0], bin[bin.length -1]]);
+        this.minVal = this.bins[0][0];
+        this.maxVal = this.bins[this.bins.length - 1][1];
+        return [this.bins[0][0],  ...this.bins.map(b => b[1])];
+    }
     makeColorScale() {
         const vals = this.table.map(row => row[this.tableNumericField]);
         const breaks = this.breaks(vals);
@@ -35,21 +42,11 @@ class Choropleth {
             paint: {
                 'fill-color': {
                     property: this.geometryIdField,
-                    // TODO check if number of geometry rows or table rows is shorter, and use that.
                     stops: this.table.map(rowToStop),
                     type: 'categorical'
                 }
             }
         };
-    }
-    breaks (vals) {
-        let bins = ss.ckmeans(vals, Math.min(this.binCount, vals.length));
-        this.minVal = bins[0][0];
-        this.maxVal = bins[bins.length - 1].slice(-1)[0];
-        return [
-            bins[0][0], 
-            ...bins.map( b => b.slice(-1)[0])
-        ];
     }
 
     checkOptions(options) {
@@ -63,6 +60,9 @@ class Choropleth {
         }, options);
 
         this.geometryType = this.geometryUrl.match(/\.geojson/) ? 'geojson' : 'vector';
+        if (typeof this.legendElement === 'string') {
+            this.legendElement = document.querySelectorAll(this.legendElement)[0];
+        }
 
         if (this.geometryType === 'vector' && !this.sourceLayer) throw ('sourceLayer required.');
     }
@@ -82,8 +82,58 @@ class Choropleth {
         mapReady( () => Promise.resolve(this.table).then(addTable));
         return this;
     }
+    addLegendCSS() {
+        let styles = document.createElement('style');
+        styles.innerHTML = `
+            .choropleth-legend {
+                background: white;
+                padding: 1em;
+                line-height: 0;
+                font-family:sans-serif;
+                border: 1px solid grey;
+            }
+
+            .choropleth-legend-box {
+                font-size: 30px;
+                margin:0;
+                display: inline-block; 
+                width: 1em; 
+                height: 1em;
+            }
+            .choropleth-legend-label {
+                vertical-align:super;
+                font-size:10pt;            
+                padding-left:1em;
+            }
+        `;
+        // document.body.appendChild(styles);
+        document.head.insertBefore(styles, document.head.firstChild);
+    }
+
+    getLegendHTML() {
+        const binHTML = bin => {
+            let col = `background-color: ${this.colorScale(bin[0]).hex()};`;
+            return `<span class="choropleth-legend-box" style="${col}"></span>` +
+                `<span class="choropleth-legend-label">${bin[0]}</span><br>`;
+                
+        };
+        return '<div class="choropleth-legend">' +
+              this.bins.reverse().map(binHTML).join('\n') +
+              '</div>';
+    }
+
+    on(event, cb) {
+        this._handlers[event].push(cb); 
+        return this;
+    }
+
+    _fire(event) {
+        this._handlers[event].forEach(cb => cb());
+    }
+
     constructor (options) {
-        const convertRow = row => (row[this.tablenumericField] = +row[this.tablenumericField], row);
+        this._handlers = { 'ready': [] };
+        const convertRow = row => ( row[this.tableNumericField] = +row[this.tableNumericField], row);
         this.checkOptions(options);
         this.makeSource();
         this.table = d3.csv(this.tableUrl, convertRow)
@@ -91,6 +141,11 @@ class Choropleth {
                 this.table = table;
                 this.makeColorScale();
                 this.makeLayer();
+                if (this.legendElement) {
+                    this.addLegendCSS();
+                    this.legendElement.innerHTML = this.getLegendHTML();
+                }
+                this._fire('ready');
             }).catch(e => { throw(e); });
     }    
 }

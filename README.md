@@ -35,7 +35,8 @@ let c = new Choropleth({ options }).addTo(map);
 
 ```
     binCount:           // Number of distinct colour bins to use.
-    colorScheme:        // Any color scheme identifier accepted by [chroma.scale()](https://gka.github.io/chroma.js/#chroma-scale), including [Color Brewer](http://colorbrewer2.org/) names ("BuGn", "Spectral") and arrays (['blue', 'white', 'red']).
+    colorScheme:        // Any color scheme identifier accepted by [`chroma.scale()``](https://gka.github.io/chroma.js/#chroma-scale), including [Color Brewer](http://colorbrewer2.org/) names (`"BuGn"`, `"Spectral"``) and arrays (`['blue', 'white', 'red']``).
+    legendElement:      // A DOM element or selector (`"#legend"``) which will be populated with a legend.
 ```
 
 #### Example
@@ -50,9 +51,30 @@ let c = new Choropleth({
     geometryIdField: 'ELECT_DIV',
     sourceLayer: 'ELB',
     binCount: 20,
-    colorScheme: 'Spectral'
+    colorScheme: 'Spectral',
+    legendElement: '#legend'
  }).addTo(map);
 ```
+
+#### Using the legend
+
+The generated legend is contains fairly basic styling. CSS classes are added before any other styles, to make them easy to override. You may want to add styles for these classes:
+
+* `.choropleth-legend`: the whole legend container (white, with a grey border)
+* `.choropleth-legend-box`: a color box (square, colored appropriately, no border)
+* `.choropleth-legend-label`: the caption of each color (sans-serif)
+
+You'll need to add your own positioning styles for the legend element itself. For instance:
+
+```
+#legend { 
+    position: absolute;
+    top: 1em;
+    left: 1em;
+}
+```
+
+You can obtain the legend HTML directly by calling `choropleth.getLegend()`.
 
 ## Credits
 
