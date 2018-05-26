@@ -35,7 +35,7 @@ let c = new Choropleth({ options }).addTo(map);
 
 ```
     binCount:           // Number of distinct colour bins to use.
-    colorScheme:        // Any color scheme identifier accepted by [`chroma.scale()``](https://gka.github.io/chroma.js/#chroma-scale), including [Color Brewer](http://colorbrewer2.org/) names (`"BuGn"`, `"Spectral"``) and arrays (`['blue', 'white', 'red']``).
+    colorScheme:        // Any color scheme identifier accepted by `[chroma.scale()](https://gka.github.io/chroma.js/#chroma-scale)`, including [Color Brewer](http://colorbrewer2.org/) names (`"BuGn"`, `"Spectral"``) and arrays (`['blue', 'white', 'red']``).
     legendElement:      // A DOM element or selector (`"#legend"``) which will be populated with a legend.
 ```
 
