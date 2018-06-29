@@ -64,8 +64,8 @@ class Choropleth {
         if (!options.tableRows && !options.tableUrl) {
             throw ('"tableRows" or "tableUrl" required.');
         }
-        if (!options.geometryTiles && !options.tableTiles) {
-            throw ('"geometryTiles" or "geometryTiles" required.');
+        if (!options.geometryTiles && !options.geometryUrl) {
+            throw ('"geometryTiles" or "geometryUrl" required.');
         }
         Object.assign(this, {
             binCount: 7,
