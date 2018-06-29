@@ -23,10 +23,12 @@ let c = new Choropleth({ options }).addTo(map);
 #### Required options
 
 ```
-    tableUrl:           // URL of a CSV file that contains your table data.
+    tableUrl:           // URL of a CSV file that contains your table data. (EITHER this or tableRows required.)
+    tableRows:          // CSV rows in the format D3 produces.
     tableNumericField:  // Name of the column in the CSV file that contains the numeric quantity to be visualised
     tableIdField:       // Name of the column in the CSV file that contains boundary identifiers
     geometryUrl:        // Either a mapbox:// vector tile URL, or a URL of a GeoJSON file containing the boundary geometry.
+    geometryTiles:      // Array of vector tile endpoints, if you have non-mapbox-hosted vector tiles. (EITHER this or geometryUrl required)
     geometryIdField:    // Name of the attribute in the CSV file that contains the same boundary identifiers as tableIdField
     sourceLayer:        // If using a vector tile source, the source layer to use.
 ```

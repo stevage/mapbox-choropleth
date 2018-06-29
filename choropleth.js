@@ -26,9 +26,13 @@ class Choropleth {
     }
     makeSource() {
         this.source = {
-            type: this.geometryType,
-            url: this.geometryUrl
+            type: this.geometryType
         };
+        if (this.geometryUrl) {
+            this.source.url = this.geometryUrl
+        } else if (this.geometryTiles) {
+            this.source.tiles = this.geometryTiles
+        }
         this.sourceId = 'choropleth';
     }
     makeLayer() {
@@ -50,16 +54,21 @@ class Choropleth {
     }
 
     checkOptions(options) {
-        for (let field of ['geometryUrl','tableUrl','tableIdField','tableNumericField','geometryIdField']) {
-            if (!options[field]) throw (field + ' required.');
+        for (let field of ['tableIdField','tableNumericField','geometryIdField']) {
+            if (!options[field]) throw ('"' + field + '" required.');
         }        
-        
+        if (!options.tableRows && !options.tableUrl) {
+            throw ('"tableRows" or "tableUrl" required.');
+        }
+        if (!options.geometryTiles && !options.tableTiles) {
+            throw ('"geometryTiles" or "geometryTiles" required.');
+        }
         Object.assign(this, {
             binCount: 7,
             colorScheme: 'RdBu',
         }, options);
 
-        this.geometryType = this.geometryUrl.match(/\.geojson/) ? 'geojson' : 'vector';
+        this.geometryType = (this.geometryUrl || '').match(/\.geojson/) ? 'geojson' : 'vector';
         if (typeof this.legendElement === 'string') {
             this.legendElement = document.querySelectorAll(this.legendElement)[0];
         }
@@ -75,7 +84,7 @@ class Choropleth {
                 map.removeLayer(this.layerId);
             }
             map.addSource(this.sourceId, this.source);
-            console.log(this.layer);
+            // console.log(this.layer);
             map.addLayer(this.layer);
         };
         const mapReady = cb => map.loaded() ? cb () : map.on('load', cb);
@@ -136,7 +145,8 @@ class Choropleth {
         const convertRow = row => ( row[this.tableNumericField] = +row[this.tableNumericField], row);
         this.checkOptions(options);
         this.makeSource();
-        this.table = d3.csv(this.tableUrl, convertRow)
+        const tableRows = this.tableRows ? Promise.resolve(this.tableRows) : d3.csv(this.tableUrl, convertRow);
+        this.table = tableRows
             .then(table => {
                 this.table = table;
                 this.makeColorScale();
