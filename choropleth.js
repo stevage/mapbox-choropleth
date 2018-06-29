@@ -43,14 +43,18 @@ class Choropleth {
             type: 'fill',
             source: this.sourceId,
             'source-layer': this.sourceLayer,
-            paint: {
+            paint: Object.assign({}, this.paint, {
                 'fill-color': {
                     property: this.geometryIdField,
                     stops: this.table.map(rowToStop),
                     type: 'categorical'
                 }
-            }
+            })
         };
+        if (this.layout) {
+            this.layer.layout = this.layout;
+        }
+
     }
 
     checkOptions(options) {
