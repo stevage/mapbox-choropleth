@@ -23,35 +23,48 @@ let c = new Choropleth({ options }).addTo(map);
 #### Required options
 
 ```
-                // URL of a CSV file that contains your table data. (EITHER this or tableRows required.)
+    // ONE of tableUrl OR tableRows is required.
+    // URL of a CSV file that contains your table data.
     tableUrl:   'http://example.com/table.csv',
-                // CSV rows in the format D3 produces.
+    
+    // CSV rows in the format D3 produces.
     //tableRows: [{ id: 'VIC', pop: 5000000}, { id: 'SA', pop: 3000000 }, ...],
-                // Name of the column in the CSV file that contains the numeric quantity to be visualised
+    
+    // Name of the column in the CSV file that contains the numeric quantity to be visualised
     tableNumericField: 'pop',
-                // Name of the column in the CSV file that contains boundary identifiers
+    
+    // Name of the column in the CSV file that contains boundary identifiers
     tableIdField: 'id',
-                // Either a mapbox:// vector tile URL, or a URL of a GeoJSON file containing the boundary geometry.
+    
+    // ONE of geometryUrl OR geometryTiles is required.
+    // Either a mapbox:// vector tile URL, or a URL of a GeoJSON file containing the boundary geometry.
     geometryUrl: 'https://example.com/state-boundaries.geojson',
-                // Array of vector tile endpoints, if you have non-mapbox-hosted vector tiles. (EITHER this or geometryUrl required)
+    
+    // Array of vector tile endpoints, if you have non-mapbox-hosted vector tiles.
     //geometryTiles: [ 'https://example.com/tiles/states/{z}/{x}/{y}.pbf' ],
-                // Name of the attribute in the CSV file that contains the same boundary identifiers as tableIdField
+    
+    // Name of the attribute in the CSV file that contains the same boundary identifiers as tableIdField
     geometryIdField: 'state_id',   
-                // If using a vector tile source, the source layer to use.
+    
+    // If using a vector tile source, the source layer to use.
     //sourceLayer: 'states'
 ```
 
 #### Optional options
 
 ```
-                // Number of distinct colour bins to use.
+    
+    // Number of distinct colour bins to use.
     binCount: 7         
-                // Any color scheme identifier accepted by [chroma.scale()](https://gka.github.io/chroma.js/#chroma-scale), including 
-                // [Color Brewer](http://colorbrewer2.org/) names ("BuGn", "Spectral") and arrays (['blue', 'white', 'red']).
+    
+    // Any color scheme identifier accepted by [chroma.scale()](https://gka.github.io/chroma.js/#chroma-scale), including 
+    // [Color Brewer](http://colorbrewer2.org/) names ("BuGn", "Spectral") and arrays (['blue', 'white', 'red']).
     colorScheme: 'BuGn',
-                // A DOM element or selector ("#legend") which will be populated with a legend.
+    
+    // A DOM element or selector ("#legend") which will be populated with a legend.
     legendElement: '#legend',    
-                // Object, Mapbox style "paint" options (for "fill" layer)
+    
+    // Object, Mapbox style "paint" options (for "fill" layer)
     paint: { 'fill-opacity': 0.5 },
 ```
 
