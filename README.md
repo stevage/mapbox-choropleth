@@ -12,9 +12,12 @@ It uses:
 
 ### Usage
 
-Install: `npm install mapbox-choropleth`
-
+Install: 
+```bash
+npm install mapbox-choropleth
 ```
+
+```js
 const Choropleth = require('mapbox-choropleth');
 
 let c = new Choropleth({ options }).addTo(map);
@@ -22,7 +25,7 @@ let c = new Choropleth({ options }).addTo(map);
 
 #### Required options
 
-```
+```js
     // ONE of tableUrl OR tableRows is required.
     // URL of a CSV file that contains your table data.
     tableUrl:   'http://example.com/table.csv',
@@ -52,7 +55,7 @@ let c = new Choropleth({ options }).addTo(map);
 
 #### Optional options
 
-```
+```js
     
     // Number of distinct colour bins to use.
     binCount: 7         
@@ -70,7 +73,7 @@ let c = new Choropleth({ options }).addTo(map);
 
 #### Example
 
-```
+```js
 const Choropleth = require('mapbox-choropleth');
 let c = new Choropleth({ 
     tableUrl: 'https://gist.githubusercontent.com/stevage/088fd8edab66157e1a307f521e38ecca/raw/46d01d54a7d95cac1ad88347aa910b5de3946b3e/elb.csv',
@@ -95,7 +98,7 @@ The generated legend is contains fairly basic styling. CSS classes are added bef
 
 You'll need to add your own positioning styles for the legend element itself. For instance:
 
-```
+```js
 #legend { 
     position: absolute;
     top: 1em;
