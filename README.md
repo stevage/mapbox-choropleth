@@ -23,24 +23,36 @@ let c = new Choropleth({ options }).addTo(map);
 #### Required options
 
 ```
-    tableUrl:           // URL of a CSV file that contains your table data. (EITHER this or tableRows required.)
-    tableRows:          // CSV rows in the format D3 produces.
-    tableNumericField:  // Name of the column in the CSV file that contains the numeric quantity to be visualised
-    tableIdField:       // Name of the column in the CSV file that contains boundary identifiers
-    geometryUrl:        // Either a mapbox:// vector tile URL, or a URL of a GeoJSON file containing the boundary geometry.
-    geometryTiles:      // Array of vector tile endpoints, if you have non-mapbox-hosted vector tiles. (EITHER this or geometryUrl required)
-    geometryIdField:    // Name of the attribute in the CSV file that contains the same boundary identifiers as tableIdField
-    sourceLayer:        // If using a vector tile source, the source layer to use.
+                // URL of a CSV file that contains your table data. (EITHER this or tableRows required.)
+    tableUrl:   'http://example.com/table.csv',
+                // CSV rows in the format D3 produces.
+    //tableRows: [{ id: 'VIC', pop: 5000000}, { id: 'SA', pop: 3000000 }, ...],
+                // Name of the column in the CSV file that contains the numeric quantity to be visualised
+    tableNumericField: 'pop',
+                // Name of the column in the CSV file that contains boundary identifiers
+    tableIdField: 'id',
+                // Either a mapbox:// vector tile URL, or a URL of a GeoJSON file containing the boundary geometry.
+    geometryUrl: 'https://example.com/state-boundaries.geojson',
+                // Array of vector tile endpoints, if you have non-mapbox-hosted vector tiles. (EITHER this or geometryUrl required)
+    //geometryTiles: [ 'https://example.com/tiles/states/{z}/{x}/{y}.pbf' ],
+                // Name of the attribute in the CSV file that contains the same boundary identifiers as tableIdField
+    geometryIdField: 'state_id',   
+                // If using a vector tile source, the source layer to use.
+    //sourceLayer: 'states'
 ```
 
 #### Optional options
 
 ```
-    binCount:           // Number of distinct colour bins to use.
-    colorScheme:        // Any color scheme identifier accepted by [chroma.scale()](https://gka.github.io/chroma.js/#chroma-scale), including [Color Brewer](http://colorbrewer2.org/) names ("BuGn", "Spectral") and arrays (['blue', 'white', 'red']).
-    legendElement:      // A DOM element or selector ("#legend") which will be populated with a legend.
-    paint:              // Object, Mapbox style "paint" options (for "fill" layer)
-    layout:             // Object, Mapbox style "layout" options (for "fill" layer)
+                // Number of distinct colour bins to use.
+    binCount: 7         
+                // Any color scheme identifier accepted by [chroma.scale()](https://gka.github.io/chroma.js/#chroma-scale), including 
+                // [Color Brewer](http://colorbrewer2.org/) names ("BuGn", "Spectral") and arrays (['blue', 'white', 'red']).
+    colorScheme: 'BuGn',
+                // A DOM element or selector ("#legend") which will be populated with a legend.
+    legendElement: '#legend',    
+                // Object, Mapbox style "paint" options (for "fill" layer)
+    paint: { 'fill-opacity': 0.5 },
 ```
 
 #### Example
