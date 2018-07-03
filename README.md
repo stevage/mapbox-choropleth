@@ -98,7 +98,7 @@ The generated legend is contains fairly basic styling. CSS classes are added bef
 
 You'll need to add your own positioning styles for the legend element itself. For instance:
 
-```js
+```css
 #legend { 
     position: absolute;
     top: 1em;
