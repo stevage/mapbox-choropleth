@@ -33,7 +33,8 @@ let c = new Choropleth({ options }).addTo(map);
     // CSV rows in the format D3 produces.
     //tableRows: [{ id: 'VIC', pop: 5000000}, { id: 'SA', pop: 3000000 }, ...],
     
-    // Name of the column in the CSV file that contains the numeric quantity to be visualised
+    // Name of the column in the CSV file that contains the numeric quantity to be visualised.
+    // Values will be coerced to numbers, so may contain numeric strings ("3.5").
     tableNumericField: 'pop',
     
     // Name of the column in the CSV file that contains boundary identifiers
