@@ -6,6 +6,7 @@
   "scripts": {
     "start": "./node_modules/budo/bin/cmd.js --port 9977 -l -H localhost test.js --wg '*.{html,css,js}'"
   },
+  "files": [ "choropleth.js" ],
   "author": "Steve Bennett <me@stevebennett.me> (http://stevebennett.me)",
   "license": "Apache-2.0",
   "repository": "https://github.com/stevage/mapbox-choropleth",
