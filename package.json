@@ -12,6 +12,7 @@
     "choropleth.js",
     "umd"
   ],
+  "unpkg": "umd/index.js",
   "author": "Steve Bennett <me@stevebennett.me> (http://stevebennett.me)",
   "license": "Apache-2.0",
   "repository": "https://github.com/stevage/mapbox-choropleth",
