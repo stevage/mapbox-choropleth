@@ -1,12 +1,14 @@
 {
   "name": "mapbox-choropleth",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "Generate choropleths in Mapbox-GL-JS maps from a CSV file and a boundary geometry source.",
   "main": "choropleth.js",
   "scripts": {
     "start": "./node_modules/budo/bin/cmd.js --port 9977 -l -H localhost test.js --wg '*.{html,css,js}'"
   },
-  "files": [ "choropleth.js" ],
+  "files": [
+    "choropleth.js"
+  ],
   "author": "Steve Bennett <me@stevebennett.me> (http://stevebennett.me)",
   "license": "Apache-2.0",
   "repository": "https://github.com/stevage/mapbox-choropleth",
