@@ -10,18 +10,29 @@ It uses:
 * SimpleStatistics.ckmean to generate colour "bins"
 * Chroma.JS to assign a colour palette
 
-### Usage
+### Usage with NPM
 
 Install: 
+
 ```bash
 npm install mapbox-choropleth
 ```
 
 ```js
-const Choropleth = require('mapbox-choropleth');
+const MapboxChoropleth = require('mapbox-choropleth');
 
-let c = new Choropleth({ options }).addTo(map);
+let c = new MapboxChoropleth({ options }).addTo(map);
 ```
+
+### Usage in `<script>` tag
+
+    <script src="https://unpkg.com/mapbox-choropleth"></script>
+    ...
+    <script>
+        let c = new MapboxChoropleth({ options }).addTo(map);
+        ...
+    </script>
+
 
 #### Required options
 
@@ -75,8 +86,8 @@ let c = new Choropleth({ options }).addTo(map);
 #### Example
 
 ```js
-const Choropleth = require('mapbox-choropleth');
-let c = new Choropleth({ 
+const MapboxChoropleth = require('mapbox-choropleth');
+let c = new MapboxChoropleth({ 
     tableUrl: 'https://gist.githubusercontent.com/stevage/088fd8edab66157e1a307f521e38ecca/raw/46d01d54a7d95cac1ad88347aa910b5de3946b3e/elb.csv',
     tableNumericField: 'Australian Labor Party Percentage',
     tableIdField: 'DivisionNm',
