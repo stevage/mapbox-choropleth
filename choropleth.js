@@ -29,7 +29,7 @@ class Choropleth {
             type: this.geometryType
         };
         if (this.geometryUrl) {
-            this.source.url = this.geometryUrl
+            this.source.data = this.geometryUrl
         } else if (this.geometryTiles) {
             this.source.tiles = this.geometryTiles
         }
@@ -42,7 +42,6 @@ class Choropleth {
             id: this.layerId,
             type: 'fill',
             source: this.sourceId,
-            'source-layer': this.sourceLayer,
             paint: Object.assign({}, this.paint, {
                 'fill-color': {
                     property: this.geometryIdField,
@@ -51,6 +50,9 @@ class Choropleth {
                 }
             })
         };
+        if (this.geometryType === 'vector') {
+            this.layer['source-layer'] = this.sourceLayer;
+        }
         if (this.layout) {
             this.layer.layout = this.layout;
         }
