@@ -75,6 +75,11 @@ class Choropleth {
         }, options);
 
         this.geometryType = (this.geometryUrl || '').match(/\.geojson/) ? 'geojson' : 'vector';
+        if (this.geometryUrl && this.geometryType === 'vector' && !this.geometryTiles) {
+            this.geometryTiles = this.geometryUrl;
+            delete this.geometryUrl;
+            console.warn('mapbox-choropleth: Converting geometryUrl to geometryTiles');
+        }
         if (typeof this.legendElement === 'string') {
             this.legendElement = document.querySelectorAll(this.legendElement)[0];
         }
@@ -82,6 +87,10 @@ class Choropleth {
         if (this.geometryType === 'vector' && !this.sourceLayer) throw ('sourceLayer required.');
     }
     addTo(map) {
+        const onMapStyleLoaded = fn => {
+            if (map.isStyleLoaded()) return process.nextTick(fn)
+            map.once('styledata', () => process.nextTick(fn)) //onMapStyleLoaded(fn))
+        }
         const addTable = table => {
             if (map.getSource(this.sourceId)) {
                 map.removeSource(this.sourceId);
@@ -90,11 +99,10 @@ class Choropleth {
                 map.removeLayer(this.layerId);
             }
             map.addSource(this.sourceId, this.source);
-            // console.log(this.layer);
             map.addLayer(this.layer);
         };
-        const mapReady = cb => map.loaded() ? cb () : map.on('load', cb);
-        mapReady( () => Promise.resolve(this.table).then(addTable));
+        
+        onMapStyleLoaded( () => Promise.resolve(this.table).then(addTable));
         return this;
     }
     addLegendCSS() {
