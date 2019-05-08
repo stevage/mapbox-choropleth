@@ -33,11 +33,11 @@ class Choropleth {
         } else if (this.geometryTiles) {
             this.source.tiles = this.geometryTiles
         }
-        this.sourceId = 'choropleth';
+        this.sourceId = this.sourceId || 'choropleth';
     }
     makeLayer() {
         const rowToStop = row => [row[this.tableIdField], this.colorScale(row[this.tableNumericField]).hex()];
-        this.layerId = 'choropleth';
+        this.layerId = this.layerId || 'choropleth';
         this.layer = {
             id: this.layerId,
             type: 'fill',
@@ -99,7 +99,11 @@ class Choropleth {
                 map.removeLayer(this.layerId);
             }
             map.addSource(this.sourceId, this.source);
-            map.addLayer(this.layer);
+            if (this.before) {
+                map.addLayer(this.layer, this.before);
+            } else {
+                map.addLayer(this.layer);
+            }
         };
         
         onMapStyleLoaded( () => Promise.resolve(this.table).then(addTable));

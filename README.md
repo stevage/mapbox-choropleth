@@ -81,6 +81,15 @@ let c = new MapboxChoropleth({ options }).addTo(map);
     
     // Object, Mapbox style "paint" options (for "fill" layer)
     paint: { 'fill-opacity': 0.5 },
+
+    // String to use as the Mapbox source ID, instead of 'choropleth'
+    sourceId: 'mychoropleth',
+
+    // String to use as the Mapbox layer ID, instead of 'choropleth'
+    layerId: 'mychoropleth',
+
+    // Insert the choropleth layer before this layer ID
+    before: 'labels'
 ```
 
 #### Example
