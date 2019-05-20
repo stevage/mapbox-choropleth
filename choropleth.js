@@ -17,7 +17,7 @@ class Choropleth {
         return [this.bins[0][0],  ...this.bins.map(b => b[1])];
     }
     makeColorScale() {
-        const vals = this.table.map(row => row[this.tableNumericField]);
+        const vals = this.table.map(row => row[this.tableNumericField]).filter(Number.isFinite);
         const breaks = this.breaks(vals);
         this.colorScale = chroma
             .scale(this.colorScheme)
@@ -28,16 +28,21 @@ class Choropleth {
         this.source = {
             type: this.geometryType
         };
-        if (this.geometryUrl) {
+        if (this.geometryType === 'geojson') {
             this.source.data = this.geometryUrl
-        } else if (this.geometryTiles) {
-            this.source.tiles = this.geometryTiles
+        } else {
+            if (this.geometryUrl) {
+                this.source.url = this.geometryUrl
+            } else if (this.geometryTiles) {
+                this.source.tiles = this.geometryTiles
+            }
         }
         this.sourceId = this.sourceId || 'choropleth';
     }
     makeLayer() {
         const rowToStop = row => [row[this.tableIdField], this.colorScale(row[this.tableNumericField]).hex()];
         this.layerId = this.layerId || 'choropleth';
+        this.numberFormatFunc = this.numberFormatFunc || (x => x.toFixed(1));
         this.layer = {
             id: this.layerId,
             type: 'fill',
@@ -45,8 +50,11 @@ class Choropleth {
             paint: Object.assign({}, this.paint, {
                 'fill-color': {
                     property: this.geometryIdField,
-                    stops: this.table.map(rowToStop),
-                    type: 'categorical'
+                    stops: this.table
+                        .filter(row => Number.isFinite(row[this.tableNumericField]))
+                        .map(rowToStop),
+                    type: 'categorical',
+                    default: 'transparent' // TODO option for non-numeric values?
                 }
             })
         };
@@ -75,11 +83,11 @@ class Choropleth {
         }, options);
 
         this.geometryType = (this.geometryUrl || '').match(/\.geojson/) ? 'geojson' : 'vector';
-        if (this.geometryUrl && this.geometryType === 'vector' && !this.geometryTiles) {
-            this.geometryTiles = this.geometryUrl;
-            delete this.geometryUrl;
-            console.warn('mapbox-choropleth: Converting geometryUrl to geometryTiles');
-        }
+        // if (this.geometryUrl && this.geometryType === 'vector' && !this.geometryTiles) {
+        //     this.geometryTiles = this.geometryUrl;
+        //     delete this.geometryUrl;
+        //     console.warn('mapbox-choropleth: Converting geometryUrl to geometryTiles');
+        // }
         if (typeof this.legendElement === 'string') {
             this.legendElement = document.querySelectorAll(this.legendElement)[0];
         }
@@ -141,7 +149,7 @@ class Choropleth {
         const binHTML = bin => {
             let col = `background-color: ${this.colorScale(bin[0]).hex()};`;
             return `<span class="choropleth-legend-box" style="${col}"></span>` +
-                `<span class="choropleth-legend-label">${bin[0]}</span><br>`;
+                `<span class="choropleth-legend-label">${this.numberFormatFunc(bin[0])}</span><br>`;
                 
         };
         return '<div class="choropleth-legend">' +

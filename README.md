@@ -89,7 +89,10 @@ let c = new MapboxChoropleth({ options }).addTo(map);
     layerId: 'mychoropleth',
 
     // Insert the choropleth layer before this layer ID
-    before: 'labels'
+    before: 'labels',
+
+    // Function to format 
+    numberFormatFunc: x => x.toFixed(2)
 ```
 
 #### Example
