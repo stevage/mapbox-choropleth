@@ -92,7 +92,12 @@ let c = new MapboxChoropleth({ options }).addTo(map);
     before: 'labels',
 
     // Function to format 
-    numberFormatFunc: x => x.toFixed(2)
+    numberFormatFunc: x => x.toFixed(2),
+
+    // additional source properties to set, as defined in the Mapbox source 
+    source: {
+        maxzoom: 13
+    }
 ```
 
 #### Example

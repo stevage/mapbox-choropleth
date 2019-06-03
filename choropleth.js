@@ -25,8 +25,9 @@ class Choropleth {
             .classes(breaks);
     }
     makeSource() {
+        const sourceProp = this.source;
         this.source = {
-            type: this.geometryType
+            type: this.geometryType,
         };
         if (this.geometryType === 'geojson') {
             this.source.data = this.geometryUrl
@@ -37,7 +38,8 @@ class Choropleth {
                 this.source.tiles = this.geometryTiles
             }
         }
-        this.sourceId = this.sourceId || 'choropleth';
+        this.sourceId = this.sourceId || 'choropleth'
+        Object.assign(this.source, sourceProp);
     }
     makeLayer() {
         const rowToStop = row => [row[this.tableIdField], this.colorScale(row[this.tableNumericField]).hex()];
