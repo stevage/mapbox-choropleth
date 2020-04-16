@@ -1,24 +1,27 @@
-/* jshint esnext:true */
 const ss = require('simple-statistics');
 const chroma = require('chroma-js');
 const d3 = require('d3-fetch');
-
+const legend = require('./legend');
+const flatten = (a) => a.reduce((a, [b, c]) => [...a, b, c], []);
 if (typeof fetch !== 'function') {
     // required for testing in node. Annoyingly this fails in browser...
     // global.fetch = require('node-fetch-polyfill');
 }
 
 class Choropleth {
-    breaks (vals) {
-        this.bins = ss.ckmeans(vals, Math.min(this.binCount, vals.length))
-            .map(bin => [bin[0], bin[bin.length -1]]);
-        this.minVal = this.bins[0][0];
-        this.maxVal = this.bins[this.bins.length - 1][1];
-        return [this.bins[0][0],  ...this.bins.map(b => b[1])];
-    }
     makeColorScale() {
-        const vals = this.table.map(row => row[this.tableNumericField]).filter(Number.isFinite);
-        const breaks = this.breaks(vals);
+        const getBreaks = (vals) => {
+            this.bins = ss
+                .ckmeans(vals, Math.min(this.binCount, vals.length))
+                .map((bin) => [bin[0], bin[bin.length - 1]]);
+            this.minVal = this.bins[0][0];
+            this.maxVal = this.bins[this.bins.length - 1][1];
+            return [this.bins[0][0], ...this.bins.map((b) => b[1])];
+        };
+        const vals = this.table
+            .map((row) => row[this.tableNumericField])
+            .filter(Number.isFinite);
+        const breaks = getBreaks(vals);
         this.colorScale = chroma
             .scale(this.colorScheme)
             .domain([this.minVal, this.maxVal])
@@ -30,78 +33,88 @@ class Choropleth {
             type: this.geometryType,
         };
         if (this.geometryType === 'geojson') {
-            this.source.data = this.geometryUrl
+            this.source.data = this.geometryUrl;
         } else {
             if (this.geometryUrl) {
-                this.source.url = this.geometryUrl
+                this.source.url = this.geometryUrl;
             } else if (this.geometryTiles) {
-                this.source.tiles = this.geometryTiles
+                this.source.tiles = this.geometryTiles;
             }
         }
-        this.sourceId = this.sourceId || 'choropleth'
+        this.sourceId = this.sourceId || 'choropleth';
         Object.assign(this.source, sourceProp);
     }
     makeLayer() {
-        const rowToStop = row => [row[this.tableIdField], this.colorScale(row[this.tableNumericField]).hex()];
-        this.layerId = this.layerId || 'choropleth';
-        this.numberFormatFunc = this.numberFormatFunc || (x => x.toFixed(1));
+        const rowToStop = (row) => [
+            row[this.tableIdField],
+            this.colorScale(row[this.tableNumericField]).hex(),
+        ];
+        let fillColorProp;
+        if (this.useFeatureState) {
+            fillColorProp = [
+                'to-color',
+                ['feature-state', 'choroplethColor'],
+                'transparent',
+            ];
+        } else {
+            fillColorProp = [
+                'match',
+                this.useFeatureId
+                    ? ['id']
+                    : ['to-string', ['get', this.geometryIdField]], // TODO what are we doing about numeric ids?
+                ...flatten(
+                    this.table
+                        .filter((row) =>
+                            Number.isFinite(row[this.tableNumericField])
+                        )
+                        .map(rowToStop)
+                ),
+                'transparent', // TODO option for non-numeric values?
+            ];
+        }
+        if (this.debug) {
+            console.log(fillColorProp);
+        }
         this.layer = {
             id: this.layerId,
             type: 'fill',
             source: this.sourceId,
             paint: Object.assign({}, this.paint, {
-                'fill-color': {
-                    property: this.geometryIdField,
-                    stops: this.table
-                        .filter(row => Number.isFinite(row[this.tableNumericField]))
-                        .map(rowToStop),
-                    type: 'categorical',
-                    default: 'transparent' // TODO option for non-numeric values?
-                }
-            })
+                'fill-color': fillColorProp,
+            }),
+            layout: Object.assign({}, this.layout),
         };
+        console.log(this.layer.paint);
         if (this.geometryType === 'vector') {
             this.layer['source-layer'] = this.sourceLayer;
         }
-        if (this.layout) {
-            this.layer.layout = this.layout;
-        }
-
     }
 
-    checkOptions(options) {
-        for (let field of ['tableIdField','tableNumericField','geometryIdField']) {
-            if (!options[field]) throw ('"' + field + '" required.');
-        }        
-        if (!options.tableRows && !options.tableUrl) {
-            throw ('"tableRows" or "tableUrl" required.');
+    setFeatureStates(map) {
+        for (let row of this.table) {
+            map.setFeatureState(
+                {
+                    id: +row[this.tableIdField],
+                    source: this.sourceId,
+                    ...(this.sourceLayer
+                        ? { sourceLayer: this.sourceLayer }
+                        : {}),
+                },
+                {
+                    choroplethColor: this.colorScale(
+                        row[this.tableNumericField]
+                    ).hex(),
+                }
+            );
         }
-        if (!options.geometryTiles && !options.geometryUrl) {
-            throw ('"geometryTiles" or "geometryUrl" required.');
-        }
-        Object.assign(this, {
-            binCount: 7,
-            colorScheme: 'RdBu',
-        }, options);
-
-        this.geometryType = (this.geometryUrl || '').match(/\.geojson/) ? 'geojson' : 'vector';
-        // if (this.geometryUrl && this.geometryType === 'vector' && !this.geometryTiles) {
-        //     this.geometryTiles = this.geometryUrl;
-        //     delete this.geometryUrl;
-        //     console.warn('mapbox-choropleth: Converting geometryUrl to geometryTiles');
-        // }
-        if (typeof this.legendElement === 'string') {
-            this.legendElement = document.querySelectorAll(this.legendElement)[0];
-        }
-
-        if (this.geometryType === 'vector' && !this.sourceLayer) throw ('sourceLayer required.');
     }
+
     addTo(map) {
-        const onMapStyleLoaded = fn => {
-            if (map.isStyleLoaded()) return process.nextTick(fn)
-            map.once('styledata', () => process.nextTick(fn)) //onMapStyleLoaded(fn))
-        }
-        const addTable = table => {
+        const onMapStyleLoaded = (fn) => {
+            const nextFn = () => process.nextTick(fn);
+            map.isStyleLoaded() ? nextFn() : map.once('styledata', nextFn);
+        };
+        const addLayer = () => {
             if (map.getSource(this.sourceId)) {
                 map.removeSource(this.sourceId);
             }
@@ -114,77 +127,111 @@ class Choropleth {
             } else {
                 map.addLayer(this.layer);
             }
+            if (this.useFeatureState) {
+                map.once('data', () => {
+                    this.setFeatureStates(map);
+                });
+            }
         };
-        
-        onMapStyleLoaded( () => Promise.resolve(this.table).then(addTable));
-        return this;
-    }
-    addLegendCSS() {
-        let styles = document.createElement('style');
-        styles.innerHTML = `
-            .choropleth-legend {
-                background: white;
-                padding: 1em;
-                line-height: 0;
-                font-family:sans-serif;
-                border: 1px solid grey;
-            }
 
-            .choropleth-legend-box {
-                font-size: 30px;
-                margin:0;
-                display: inline-block; 
-                width: 1em; 
-                height: 1em;
-            }
-            .choropleth-legend-label {
-                vertical-align:super;
-                font-size:10pt;            
-                padding-left:1em;
-            }
-        `;
-        // document.body.appendChild(styles);
-        document.head.insertBefore(styles, document.head.firstChild);
+        onMapStyleLoaded(() => Promise.resolve(this.table).then(addLayer));
+        return this;
     }
 
     getLegendHTML() {
-        const binHTML = bin => {
-            let col = `background-color: ${this.colorScale(bin[0]).hex()};`;
-            return `<span class="choropleth-legend-box" style="${col}"></span>` +
-                `<span class="choropleth-legend-label">${this.numberFormatFunc(bin[0])}</span><br>`;
-                
-        };
-        return '<div class="choropleth-legend">' +
-              this.bins.reverse().map(binHTML).join('\n') +
-              '</div>';
+        return legend.getHTML(this);
     }
 
     on(event, cb) {
-        this._handlers[event].push(cb); 
+        this._handlers[event].push(cb);
         return this;
     }
 
     _fire(event) {
-        this._handlers[event].forEach(cb => cb());
+        this._handlers[event].forEach((cb) => cb());
     }
 
-    constructor (options) {
-        this._handlers = { 'ready': [] };
-        const convertRow = row => ( row[this.tableNumericField] = +row[this.tableNumericField], row);
+    checkOptions(options) {
+        if (
+            ['tableIdField', 'tableNumericField'].find(
+                (field) => !options[field]
+            )
+        ) {
+            throw '"' + field + '" required.';
+        }
+        if (!options.geometryIdField && !options.useFeatureId) {
+            throw '"geometryIdField" or "useFeatureId" required.';
+        }
+
+        if (options.useFeatureState && !options.useFeatureId) {
+            throw '"useFeatureState" requires "useFeatureId"';
+        }
+
+        if (!options.tableRows && !options.tableUrl) {
+            throw '"tableRows" or "tableUrl" required.';
+        }
+        if (!options.geometryTiles && !options.geometryUrl) {
+            throw '"geometryTiles" or "geometryUrl" required.';
+        }
+        Object.assign(
+            this,
+            {
+                binCount: 7,
+                colorScheme: 'RdBu',
+                layerId: 'choropleth',
+                numberFormatFunc: (x) => x.toFixed(1),
+            },
+            options
+        );
+
+        this.geometryType = (this.geometryUrl || '').match(/\.geojson/)
+            ? 'geojson'
+            : 'vector';
+        if (typeof this.legendElement === 'string') {
+            this.legendElement = document.querySelectorAll(
+                this.legendElement
+            )[0];
+        }
+
+        if (this.geometryType === 'vector' && !this.sourceLayer)
+            throw 'sourceLayer required.';
+    }
+
+    async _load() {
+        const convertRow = (row) => {
+            row[this.tableNumericField] = +row[this.tableNumericField];
+            if (this.useFeatureId) {
+                row[this.tableIdField] = +row[this.tableIdField];
+            }
+            return row;
+        };
+        const table = await (this.tableRows
+            ? this.tableRows
+            : d3.csv(this.tableUrl, convertRow));
+        this.table = table;
+        if (this.debug) {
+            console.log(this.table);
+        }
+        this.makeColorScale();
+        if (this.debug) {
+            console.log(this.bins);
+        }
+        this.makeLayer();
+        if (this.legendElement) {
+            let styles = document.createElement('style');
+            styles.innerHTML = legend.getCSS();
+            document.head.insertBefore(styles, document.head.firstChild);
+            this.legendElement.innerHTML = this.getLegendHTML();
+        }
+        this._fire('ready');
+    }
+
+    constructor(options) {
+        this._handlers = { ready: [] };
         this.checkOptions(options);
+        this.bins = [];
         this.makeSource();
-        const tableRows = this.tableRows ? Promise.resolve(this.tableRows) : d3.csv(this.tableUrl, convertRow);
-        this.table = tableRows
-            .then(table => {
-                this.table = table;
-                this.makeColorScale();
-                this.makeLayer();
-                if (this.legendElement) {
-                    this.addLegendCSS();
-                    this.legendElement.innerHTML = this.getLegendHTML();
-                }
-                this._fire('ready');
-            }).catch(e => { throw(e); });
-    }    
+        this.table = this._load(); // make .table a promise then later a value
+    }
 }
 module.exports = Choropleth;

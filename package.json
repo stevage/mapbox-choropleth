@@ -10,6 +10,7 @@
   },
   "files": [
     "choropleth.js",
+    "legend.js",
     "umd"
   ],
   "unpkg": "umd/index.js",
