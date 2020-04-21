@@ -105,9 +105,10 @@ let c = new MapboxChoropleth({ options }).addTo(map);
         maxzoom: 13
     },
 
+    immediate: true, // Adds layer immediately, rather than trying to wait till the map is ready. Defaults to false.
+
     // Cast values in CSV to string or number to make them
     // geometryIdFieldType: String, // or Number, or undefined.
-
 ```
 
 #### Example

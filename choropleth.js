@@ -121,8 +121,15 @@ class Choropleth {
 
     addTo(map) {
         const onMapStyleLoaded = (fn) => {
-            const nextFn = () => process.nextTick(fn);
-            map.isStyleLoaded() ? nextFn() : map.once('styledata', nextFn);
+            // It seems to be so hard to reliably add a layer without hitting a 'style not ready' error.
+            if (this.immediate) {
+                fn();
+            } else if (map.isStyleLoaded()) {
+                const nextFn = () => window.setInterval(fn, 0);
+                nextFn();
+            } else {
+                map.once('style.load', fn);
+            }
         };
         const addLayer = () => {
             if (map.getSource(this.sourceId)) {
