@@ -8,6 +8,14 @@ if (typeof fetch !== 'function') {
     // global.fetch = require('node-fetch-polyfill');
 }
 
+function toNumber(x) {
+    if (x === '' || x === ' ') {
+        return null;
+    } else {
+        return +x;
+    }
+}
+
 class Choropleth {
     makeColorScale() {
         const getBreaks = (vals) => {
@@ -19,7 +27,7 @@ class Choropleth {
             return [this.bins[0][0], ...this.bins.map((b) => b[1])];
         };
         const vals = this.table
-            .map((row) => row[this.tableNumericField])
+            .map((row) => toNumber(row[this.tableNumericField]))
             .filter(Number.isFinite);
         const breaks = getBreaks(vals);
         this.colorScale = chroma
@@ -47,7 +55,7 @@ class Choropleth {
     makeLayer() {
         const rowToStop = (row) => [
             row[this.tableIdField],
-            this.colorScale(row[this.tableNumericField]).hex(),
+            this.colorScale(toNumber(row[this.tableNumericField])).hex(),
         ];
         let fillColorProp;
         if (this.useFeatureState) {
@@ -65,7 +73,9 @@ class Choropleth {
                 ...flatten(
                     this.table
                         .filter((row) =>
-                            Number.isFinite(row[this.tableNumericField])
+                            Number.isFinite(
+                                toNumber(row[this.tableNumericField])
+                            )
                         )
                         .map(rowToStop)
                 ),
@@ -102,7 +112,7 @@ class Choropleth {
                 },
                 {
                     choroplethColor: this.colorScale(
-                        row[this.tableNumericField]
+                        toNumber(row[this.tableNumericField])
                     ).hex(),
                 }
             );
@@ -152,12 +162,11 @@ class Choropleth {
     }
 
     checkOptions(options) {
-        if (
-            ['tableIdField', 'tableNumericField'].find(
-                (field) => !options[field]
-            )
-        ) {
-            throw '"' + field + '" required.';
+        if (!options.tableIdField) {
+            throw '"tableIdField" required';
+        }
+        if (!options.tableNumericField) {
+            throw '"tableNumericField" required';
         }
         if (!options.geometryIdField && !options.useFeatureId) {
             throw '"geometryIdField" or "useFeatureId" required.';
