@@ -96,7 +96,6 @@ class Choropleth {
             }),
             layout: Object.assign({}, this.layout),
         };
-        console.log(this.layer.paint);
         if (this.geometryType === 'vector') {
             layer['source-layer'] = this.sourceLayer;
         }
@@ -104,7 +103,8 @@ class Choropleth {
     }
     /* After initialisation, set rows directly */
     setRows(rows) {
-        this.rows = rows;
+        this.table = rows;
+        this.colorScale = this._getColorScale();
         this._map.setPaintProperty(
             this.layerId,
             'fill-color',
