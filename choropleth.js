@@ -17,7 +17,7 @@ function toNumber(x) {
 }
 
 class Choropleth {
-    makeColorScale() {
+    _getColorScale() {
         const getBreaks = (vals) => {
             this.bins = ss
                 .ckmeans(vals, Math.min(this.binCount, vals.length))
@@ -30,62 +30,64 @@ class Choropleth {
             .map((row) => toNumber(row[this.tableNumericField]))
             .filter(Number.isFinite);
         const breaks = getBreaks(vals);
-        this.colorScale = chroma
+        return chroma
             .scale(this.colorScheme)
             .domain([this.minVal, this.maxVal])
             .classes(breaks);
     }
-    makeSource() {
-        const sourceProp = this.source;
-        this.source = {
+    _getSourceDef() {
+        const sourceDef = {
             type: this.geometryType,
         };
         if (this.geometryType === 'geojson') {
-            this.source.data = this.geometryUrl;
+            sourceDef.data = this.geometryUrl;
         } else {
             if (this.geometryUrl) {
-                this.source.url = this.geometryUrl;
+                sourceDef.url = this.geometryUrl;
             } else if (this.geometryTiles) {
-                this.source.tiles = this.geometryTiles;
+                sourceDef.tiles = this.geometryTiles;
             }
         }
         this.sourceId = this.sourceId || 'choropleth';
-        Object.assign(this.source, sourceProp);
+        return { ...sourceDef, ...this.source };
     }
-    makeLayer() {
+    /*
+    todo: support updating data after the class is instantiated. so first we factor out _fillColorProp()
+    */
+    _getFillColorProp() {
         const rowToStop = (row) => [
             row[this.tableIdField],
             this.colorScale(toNumber(row[this.tableNumericField])).hex(),
         ];
-        let fillColorProp;
         if (this.useFeatureState) {
-            fillColorProp = [
+            return [
                 'to-color',
                 ['feature-state', 'choroplethColor'],
                 'transparent',
             ];
-        } else {
-            fillColorProp = [
-                'match',
-                this.useFeatureId
-                    ? ['id']
-                    : ['to-string', ['get', this.geometryIdField]], // TODO what are we doing about numeric ids?
-                ...flatten(
-                    this.table
-                        .filter((row) =>
-                            Number.isFinite(
-                                toNumber(row[this.tableNumericField])
-                            )
-                        )
-                        .map(rowToStop)
-                ),
-                'transparent', // TODO option for non-numeric values?
-            ];
         }
+        return [
+            'match',
+            this.useFeatureId
+                ? ['id']
+                : ['to-string', ['get', this.geometryIdField]], // TODO what are we doing about numeric ids?
+            ...flatten(
+                this.table
+                    .filter((row) =>
+                        Number.isFinite(toNumber(row[this.tableNumericField]))
+                    )
+                    .map(rowToStop)
+            ),
+            'transparent', // TODO option for non-numeric values?
+        ];
+    }
+    _getLayerDef() {
+        const fillColorProp = this._getFillColorProp();
         if (this.debug) {
             console.log(fillColorProp);
         }
-        this.layer = {
+
+        const layer = {
             id: this.layerId,
             type: 'fill',
             source: this.sourceId,
@@ -96,10 +98,19 @@ class Choropleth {
         };
         console.log(this.layer.paint);
         if (this.geometryType === 'vector') {
-            this.layer['source-layer'] = this.sourceLayer;
+            layer['source-layer'] = this.sourceLayer;
         }
+        return layer;
     }
-
+    /* After initialisation, set rows directly */
+    setRows(rows) {
+        this.rows = rows;
+        this._map.setPaintProperty(
+            this.layerId,
+            'fill-color',
+            this._getFillColorProp()
+        );
+    }
     setFeatureStates(map) {
         for (let row of this.table) {
             map.setFeatureState(
@@ -138,7 +149,7 @@ class Choropleth {
             if (map.getLayer(this.layerId)) {
                 map.removeLayer(this.layerId);
             }
-            map.addSource(this.sourceId, this.source);
+            map.addSource(this.sourceId, this.sourceDef);
             if (this.before) {
                 map.addLayer(this.layer, this.before);
             } else {
@@ -150,6 +161,8 @@ class Choropleth {
                 });
             }
         };
+
+        this._map = map;
 
         onMapStyleLoaded(() => Promise.resolve(this.table).then(addLayer));
         return this;
@@ -228,11 +241,11 @@ class Choropleth {
         if (this.debug) {
             console.log(this.table);
         }
-        this.makeColorScale();
+        this.colorScale = this._getColorScale();
         if (this.debug) {
             console.log(this.bins);
         }
-        this.makeLayer();
+        this.layer = this._getLayerDef();
         if (this.legendElement) {
             let styles = document.createElement('style');
             styles.innerHTML = legend.getCSS();
@@ -246,7 +259,7 @@ class Choropleth {
         this._handlers = { ready: [] };
         this.checkOptions(options);
         this.bins = [];
-        this.makeSource();
+        this.sourceDef = this._getSourceDef();
         this.table = this._load(); // make .table a promise then later a value
     }
 }
