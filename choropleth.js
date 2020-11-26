@@ -51,9 +51,6 @@ class Choropleth {
         this.sourceId = this.sourceId || 'choropleth';
         return { ...sourceDef, ...this.source };
     }
-    /*
-    todo: support updating data after the class is instantiated. so first we factor out _fillColorProp()
-    */
     _getFillColorProp() {
         const rowToStop = (row) => [
             row[this.tableIdField],
@@ -74,9 +71,9 @@ class Choropleth {
             ...flatten(
                 this.table
                     .filter((row) =>
-                        Number.isFinite(toNumber(row[this.tableNumericField]))
+                        Number.isFinite(toNumber(row[this.tableNumericField])),
                     )
-                    .map(rowToStop)
+                    .map(rowToStop),
             ),
             'transparent', // TODO option for non-numeric values?
         ];
@@ -105,10 +102,11 @@ class Choropleth {
     setRows(rows) {
         this.table = rows;
         this.colorScale = this._getColorScale();
+        this.legendElement.innerHTML = this.getLegendHTML();
         this._map.setPaintProperty(
             this.layerId,
             'fill-color',
-            this._getFillColorProp()
+            this._getFillColorProp(),
         );
     }
     setFeatureStates(map) {
@@ -123,9 +121,9 @@ class Choropleth {
                 },
                 {
                     choroplethColor: this.colorScale(
-                        toNumber(row[this.tableNumericField])
+                        toNumber(row[this.tableNumericField]),
                     ).hex(),
-                }
+                },
             );
         }
     }
@@ -143,11 +141,11 @@ class Choropleth {
             }
         };
         const addLayer = () => {
-            if (map.getSource(this.sourceId)) {
-                map.removeSource(this.sourceId);
-            }
             if (map.getLayer(this.layerId)) {
                 map.removeLayer(this.layerId);
+            }
+            if (map.getSource(this.sourceId)) {
+                map.removeSource(this.sourceId);
             }
             map.addSource(this.sourceId, this.sourceDef);
             if (this.before) {
@@ -166,6 +164,22 @@ class Choropleth {
 
         onMapStyleLoaded(() => Promise.resolve(this.table).then(addLayer));
         return this;
+    }
+    remove() {
+        if (this._map) {
+            if (this._map.getLayer(this.layerId)) {
+                this._map.removeLayer(this.layerId);
+            }
+            if (this._map.getSource(this.sourceId)) {
+                this._map.removeSource(this.sourceId);
+            }
+        }
+        if (this.legendElement) {
+            if (this._stylesElement) {
+                this._stylesElement.parentNode.removeChild(this._stylesElement);
+            }
+            this.legendElement.innerHTML = '';
+        }
     }
 
     getLegendHTML() {
@@ -210,7 +224,7 @@ class Choropleth {
                 layerId: 'choropleth',
                 numberFormatFunc: (x) => x.toFixed(1),
             },
-            options
+            options,
         );
 
         this.geometryType = (this.geometryUrl || '').match(/\.geojson/)
@@ -218,7 +232,7 @@ class Choropleth {
             : 'vector';
         if (typeof this.legendElement === 'string') {
             this.legendElement = document.querySelectorAll(
-                this.legendElement
+                this.legendElement,
             )[0];
         }
 
@@ -247,9 +261,12 @@ class Choropleth {
         }
         this.layer = this._getLayerDef();
         if (this.legendElement) {
-            let styles = document.createElement('style');
-            styles.innerHTML = legend.getCSS();
-            document.head.insertBefore(styles, document.head.firstChild);
+            this._stylesElement = document.createElement('style');
+            this._stylesElement.innerHTML = legend.getCSS();
+            document.head.insertBefore(
+                this._stylesElement,
+                document.head.firstChild,
+            );
             this.legendElement.innerHTML = this.getLegendHTML();
         }
         this._fire('ready');
