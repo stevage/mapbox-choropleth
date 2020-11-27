@@ -134,7 +134,7 @@ class Choropleth {
             if (this.immediate) {
                 fn();
             } else if (map.isStyleLoaded()) {
-                const nextFn = () => window.setInterval(fn, 0);
+                const nextFn = () => window.setTimeout(fn, 0);
                 nextFn();
             } else {
                 map.once('style.load', fn);
