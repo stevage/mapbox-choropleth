@@ -5,7 +5,7 @@
   "main": "choropleth.js",
   "scripts": {
     "start": "./node_modules/budo/bin/cmd.js --port 9977 -l -H localhost test.js --wg '*.{html,css,js}'",
-    "prepare": "npm run build",
+    "prepare": "mkdir -p umd; npm run build",
     "build": "node node_modules/browserify/bin/cmd.js -s MapboxChoropleth choropleth.js > umd/index.js "
   },
   "files": [
